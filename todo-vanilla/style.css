@@ -61,7 +61,8 @@ body {
 }
 
 .add-button,
-.todo-button {
+.todo-button,
+.filter-button {
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -79,6 +80,28 @@ body {
   margin: 12px 0;
   color: #e03131;
   font-size: 14px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 6px;
+  background: #f3efff;
+  border-radius: 14px;
+}
+
+.filter-button {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: #777;
+}
+
+.filter-button.active {
+  background: #672be0;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(103, 43, 224, 0.22);
 }
 
 .todo-list {
