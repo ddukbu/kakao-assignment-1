@@ -66,11 +66,24 @@ function getWeekDates() {
   return weekDates;
 }
 
-// 특정 날짜에 해당하는 Todo 개수를 반환하는 함수
+// 특정 날짜에 해당하는 전체 Todo 개수와 완료한 Todo개수를 반환하는 함수
 function getTodoCountByDate(date) {
   const dateKey = formatDateKey(date);
 
-  return todoItems.filter((todoItem) => todoItem.date === dateKey).length;
+  const todosByDate = todoItems.filter((todoItem) => {
+    return todoItem.date === dateKey;
+  });
+
+  const completedCount = todosByDate.filter((todoItem) => {
+    return todoItem.isCompleted;
+  }).length;
+
+  const totalCount = todosByDate.length;
+
+  return {
+    completedCount,
+    totalCount,
+  };
 }
 
 // Todo 배열을 로컬스토리지에 저장하는 함수
@@ -106,7 +119,7 @@ function renderWeekDateList() {
 
   weekDates.forEach((weekDate) => {
     const weekDateKey = formatDateKey(weekDate);
-    const todoCount = getTodoCountByDate(weekDate);
+    const todoCountInfo = getTodoCountByDate(weekDate);
 
     const weekDateButton = document.createElement("button");
     weekDateButton.type = "button";
@@ -128,7 +141,7 @@ function renderWeekDateList() {
         ${weekDate.getDate()}
       </span>
       <span class="week-todo-count">
-        ${todoCount}개
+        ${todoCountInfo.completedCount}/${todoCountInfo.totalCount}
       </span>
     `;
 
@@ -346,6 +359,7 @@ function toggleTodoCompletion(todoId) {
   }
 
   saveTodoItemsToLocalStorage();
+  renderWeekDateList();
   renderTodoList();
 }
 
