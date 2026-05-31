@@ -9,6 +9,8 @@ const nextDateButton = document.getElementById("nextDateButton");
 
 const filterButtons = document.querySelectorAll(".filter-button");
 
+const TODO_STORAGE_KEY = "vanillaTodoItems";
+
 let todoItems = [];
 let currentFilter = "all";
 let selectedDate = new Date();
@@ -30,6 +32,24 @@ function formatDateText(date) {
     day: "numeric",
     weekday: "long",
   });
+}
+
+// Todo 배열을 로컬스토리지에 저장하는 함수
+function saveTodoItemsToLocalStorage() {
+  const todoItemsJson = JSON.stringify(todoItems);
+
+  localStorage.setItem(TODO_STORAGE_KEY, todoItemsJson);
+}
+
+// 로컬스토리지에 저장된 Todo 배열을 불러오는 함수
+function loadTodoItemsFromLocalStorage() {
+  const savedTodoItemsJson = localStorage.getItem(TODO_STORAGE_KEY);
+
+  if (savedTodoItemsJson === null) {
+    return [];
+  }
+
+  return JSON.parse(savedTodoItemsJson);
 }
 
 // 선택된 날짜 텍스트를 화면에 표시하는 함수
@@ -140,6 +160,7 @@ function addTodoItem(todoText) {
   };
 
   todoItems.push(newTodoItem);
+  saveTodoItemsToLocalStorage();
   renderTodoList();
 }
 
@@ -161,6 +182,8 @@ function editTodoItem(todoId) {
   }
 
   targetTodoItem.text = trimmedTodoText;
+
+  saveTodoItemsToLocalStorage();
   clearMessage();
   renderTodoList();
 }
@@ -178,12 +201,15 @@ function toggleTodoCompletion(todoId) {
     return todoItem;
   });
 
+  saveTodoItemsToLocalStorage();
   renderTodoList();
 }
 
 // Todo를 삭제하는 함수
 function deleteTodoItem(todoId) {
   todoItems = todoItems.filter((todoItem) => todoItem.id !== todoId);
+
+  saveTodoItemsToLocalStorage();
   renderTodoList();
 }
 
@@ -233,6 +259,9 @@ filterButtons.forEach((filterButton) => {
   });
 });
 
-// 앱이 처음 실행될 때 오늘 날짜를 화면에 표시
+// 앱이 처음 실행될 때 로컬스토리지에서 Todo 데이터를 불러옴
+todoItems = loadTodoItemsFromLocalStorage();
+
+// 앱이 처음 실행될 때 오늘 날짜와 Todo 목록을 화면에 표시
 renderSelectedDate();
 renderTodoList();
