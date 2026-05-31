@@ -4,8 +4,9 @@ const todoList = document.getElementById("todoList");
 const messageText = document.getElementById("messageText");
 
 const selectedDateText = document.getElementById("selectedDateText");
-const previousDateButton = document.getElementById("previousDateButton");
-const nextDateButton = document.getElementById("nextDateButton");
+const previousWeekButton = document.getElementById("previousWeekButton");
+const nextWeekButton = document.getElementById("nextWeekButton");
+const weekDateList = document.getElementById("weekDateList");
 
 const filterButtons = document.querySelectorAll(".filter-button");
 
@@ -14,6 +15,11 @@ const TODO_STORAGE_KEY = "vanillaTodoItems";
 let todoItems = [];
 let currentFilter = "all";
 let selectedDate = new Date();
+
+// Date 객체를 복사하는 함수
+function copyDate(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
 
 // 날짜를 YYYY-MM-DD 형태의 문자열로 변환하는 함수
 function formatDateKey(date) {
@@ -32,6 +38,38 @@ function formatDateText(date) {
     day: "numeric",
     weekday: "long",
   });
+}
+
+// 선택된 날짜가 속한 주의 월요일을 구하는 함수
+function getStartOfWeek(date) {
+  const copiedDate = copyDate(date);
+  const day = copiedDate.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+
+  copiedDate.setDate(copiedDate.getDate() + mondayOffset);
+
+  return copiedDate;
+}
+
+// 현재 선택된 주의 월요일부터 일요일까지 Date 배열을 만드는 함수
+function getWeekDates() {
+  const startOfWeek = getStartOfWeek(selectedDate);
+  const weekDates = [];
+
+  for (let index = 0; index < 7; index++) {
+    const weekDate = copyDate(startOfWeek);
+    weekDate.setDate(startOfWeek.getDate() + index);
+    weekDates.push(weekDate);
+  }
+
+  return weekDates;
+}
+
+// 특정 날짜에 해당하는 Todo 개수를 반환하는 함수
+function getTodoCountByDate(date) {
+  const dateKey = formatDateKey(date);
+
+  return todoItems.filter((todoItem) => todoItem.date === dateKey).length;
 }
 
 // Todo 배열을 로컬스토리지에 저장하는 함수
@@ -57,11 +95,60 @@ function renderSelectedDate() {
   selectedDateText.textContent = formatDateText(selectedDate);
 }
 
-// 선택된 날짜를 하루 이동시키는 함수
-function moveSelectedDate(dayAmount) {
-  selectedDate.setDate(selectedDate.getDate() + dayAmount);
+// 주간 날짜 목록을 화면에 표시하는 함수
+function renderWeekDateList() {
+  const weekDates = getWeekDates();
+  const todayKey = formatDateKey(new Date());
+  const selectedDateKey = formatDateKey(selectedDate);
+
+  weekDateList.innerHTML = "";
+
+  weekDates.forEach((weekDate) => {
+    const weekDateKey = formatDateKey(weekDate);
+    const todoCount = getTodoCountByDate(weekDate);
+
+    const weekDateButton = document.createElement("button");
+    weekDateButton.type = "button";
+    weekDateButton.className = "week-date-button";
+
+    if (weekDateKey === selectedDateKey) {
+      weekDateButton.classList.add("selected");
+    }
+
+    if (weekDateKey === todayKey) {
+      weekDateButton.classList.add("today");
+    }
+
+    weekDateButton.innerHTML = `
+      <span class="week-day-name">
+        ${weekDate.toLocaleDateString("ko-KR", { weekday: "short" })}
+      </span>
+      <span class="week-day-number">
+        ${weekDate.getDate()}
+      </span>
+      <span class="week-todo-count">
+        ${todoCount}개
+      </span>
+    `;
+
+    weekDateButton.addEventListener("click", () => {
+      selectedDate = copyDate(weekDate);
+
+      renderSelectedDate();
+      renderWeekDateList();
+      renderTodoList();
+    });
+
+    weekDateList.appendChild(weekDateButton);
+  });
+}
+
+// 선택된 주를 이동시키는 함수
+function moveSelectedWeek(weekAmount) {
+  selectedDate.setDate(selectedDate.getDate() + weekAmount * 7);
 
   renderSelectedDate();
+  renderWeekDateList();
   renderTodoList();
 }
 
@@ -161,6 +248,7 @@ function addTodoItem(todoText) {
 
   todoItems.push(newTodoItem);
   saveTodoItemsToLocalStorage();
+  renderWeekDateList();
   renderTodoList();
 }
 
@@ -210,6 +298,7 @@ function deleteTodoItem(todoId) {
   todoItems = todoItems.filter((todoItem) => todoItem.id !== todoId);
 
   saveTodoItemsToLocalStorage();
+  renderWeekDateList();
   renderTodoList();
 }
 
@@ -239,14 +328,14 @@ todoForm.addEventListener("submit", (event) => {
   clearMessage();
 });
 
-// 이전 날짜 버튼 클릭 시 하루 전으로 이동
-previousDateButton.addEventListener("click", () => {
-  moveSelectedDate(-1);
+// 이전 주 버튼 클릭 시 7일 전으로 이동
+previousWeekButton.addEventListener("click", () => {
+  moveSelectedWeek(-1);
 });
 
-// 다음 날짜 버튼 클릭 시 하루 뒤로 이동
-nextDateButton.addEventListener("click", () => {
-  moveSelectedDate(1);
+// 다음 주 버튼 클릭 시 7일 뒤로 이동
+nextWeekButton.addEventListener("click", () => {
+  moveSelectedWeek(1);
 });
 
 // 필터 탭 클릭 시 현재 필터 상태를 변경
@@ -262,6 +351,7 @@ filterButtons.forEach((filterButton) => {
 // 앱이 처음 실행될 때 로컬스토리지에서 Todo 데이터를 불러옴
 todoItems = loadTodoItemsFromLocalStorage();
 
-// 앱이 처음 실행될 때 오늘 날짜와 Todo 목록을 화면에 표시
+// 앱이 처음 실행될 때 오늘 날짜, 주간 날짜 목록, Todo 목록을 화면에 표시
 renderSelectedDate();
+renderWeekDateList();
 renderTodoList();

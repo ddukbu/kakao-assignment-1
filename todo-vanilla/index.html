@@ -11,14 +11,16 @@
     <section class="todo-card">
       <header class="app-header">
         <h1>Todo</h1>
-        <p>날짜별로 오늘의 할 일을 관리해보세요.</p>
+        <p>주간 일정과 오늘의 할 일을 관리해보세요.</p>
       </header>
 
-      <div class="date-view">
-        <button type="button" id="previousDateButton" class="date-button">이전</button>
+      <div class="week-header">
+        <button type="button" id="previousWeekButton" class="date-button">이전 주</button>
         <strong id="selectedDateText" class="selected-date-text"></strong>
-        <button type="button" id="nextDateButton" class="date-button">다음</button>
+        <button type="button" id="nextWeekButton" class="date-button">다음 주</button>
       </div>
+
+      <div id="weekDateList" class="week-date-list"></div>
 
       <form class="todo-form" id="todoForm">
         <input
