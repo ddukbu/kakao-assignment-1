@@ -2,22 +2,70 @@ const todoForm = document.getElementById("todoForm");
 const todoInput = document.getElementById("todoInput");
 const todoList = document.getElementById("todoList");
 const messageText = document.getElementById("messageText");
+
+const selectedDateText = document.getElementById("selectedDateText");
+const previousDateButton = document.getElementById("previousDateButton");
+const nextDateButton = document.getElementById("nextDateButton");
+
 const filterButtons = document.querySelectorAll(".filter-button");
 
 let todoItems = [];
 let currentFilter = "all";
+let selectedDate = new Date();
 
-// 현재 선택된 필터에 맞는 Todo 목록을 반환하는 함수
+// 날짜를 YYYY-MM-DD 형태의 문자열로 변환하는 함수
+function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+// 화면에 표시할 날짜 문자열을 만드는 함수
+function formatDateText(date) {
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+}
+
+// 선택된 날짜 텍스트를 화면에 표시하는 함수
+function renderSelectedDate() {
+  selectedDateText.textContent = formatDateText(selectedDate);
+}
+
+// 선택된 날짜를 하루 이동시키는 함수
+function moveSelectedDate(dayAmount) {
+  selectedDate.setDate(selectedDate.getDate() + dayAmount);
+
+  renderSelectedDate();
+  renderTodoList();
+}
+
+// 현재 선택된 날짜와 필터에 맞는 Todo 목록을 반환하는 함수
 function getFilteredTodoItems() {
+  const selectedDateKey = formatDateKey(selectedDate);
+
+  let filteredTodoItems = todoItems.filter((todoItem) => {
+    return todoItem.date === selectedDateKey;
+  });
+
   if (currentFilter === "active") {
-    return todoItems.filter((todoItem) => !todoItem.isCompleted);
+    filteredTodoItems = filteredTodoItems.filter((todoItem) => {
+      return !todoItem.isCompleted;
+    });
   }
 
   if (currentFilter === "completed") {
-    return todoItems.filter((todoItem) => todoItem.isCompleted);
+    filteredTodoItems = filteredTodoItems.filter((todoItem) => {
+      return todoItem.isCompleted;
+    });
   }
 
-  return todoItems;
+  return filteredTodoItems;
 }
 
 // Todo 목록을 화면에 다시 그리는 함수
@@ -88,6 +136,7 @@ function addTodoItem(todoText) {
     id: Date.now(),
     text: todoText,
     isCompleted: false,
+    date: formatDateKey(selectedDate),
   };
 
   todoItems.push(newTodoItem);
@@ -148,7 +197,7 @@ function clearMessage() {
   messageText.textContent = "";
 }
 
-// 폼 제출 시 Todo 생성
+// 폼 제출 시 현재 선택된 날짜의 Todo 생성
 todoForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -164,7 +213,17 @@ todoForm.addEventListener("submit", (event) => {
   clearMessage();
 });
 
-// 필터 탭 클릭 시 현재 필터 상태를 변경하는 이벤트들을 각 필터 버튼에 등록
+// 이전 날짜 버튼 클릭 시 하루 전으로 이동
+previousDateButton.addEventListener("click", () => {
+  moveSelectedDate(-1);
+});
+
+// 다음 날짜 버튼 클릭 시 하루 뒤로 이동
+nextDateButton.addEventListener("click", () => {
+  moveSelectedDate(1);
+});
+
+// 필터 탭 클릭 시 현재 필터 상태를 변경
 filterButtons.forEach((filterButton) => {
   filterButton.addEventListener("click", () => {
     currentFilter = filterButton.dataset.filter;
@@ -173,3 +232,7 @@ filterButtons.forEach((filterButton) => {
     renderTodoList();
   });
 });
+
+// 앱이 처음 실행될 때 오늘 날짜를 화면에 표시
+renderSelectedDate();
+renderTodoList();

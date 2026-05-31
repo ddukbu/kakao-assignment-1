@@ -28,7 +28,7 @@ body {
 }
 
 .app-header {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .app-header h1 {
@@ -40,6 +40,32 @@ body {
 .app-header p {
   color: #777;
   font-size: 15px;
+}
+
+.date-view {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f3efff;
+  border-radius: 14px;
+}
+
+.selected-date-text {
+  color: #672be0;
+  font-size: 16px;
+}
+
+.date-button {
+  border: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #ffffff;
+  color: #672be0;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .todo-form {
