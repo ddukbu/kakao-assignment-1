@@ -15,6 +15,7 @@ const TODO_STORAGE_KEY = "vanillaTodoItems";
 let todoItems = [];
 let currentFilter = "all";
 let selectedDate = new Date();
+let editingTodoId = null;
 
 // Date 객체를 복사하는 함수
 function copyDate(date) {
@@ -133,6 +134,7 @@ function renderWeekDateList() {
 
     weekDateButton.addEventListener("click", () => {
       selectedDate = copyDate(weekDate);
+      editingTodoId = null;
 
       renderSelectedDate();
       renderWeekDateList();
@@ -146,6 +148,7 @@ function renderWeekDateList() {
 // 선택된 주를 이동시키는 함수
 function moveSelectedWeek(weekAmount) {
   selectedDate.setDate(selectedDate.getDate() + weekAmount * 7);
+  editingTodoId = null;
 
   renderSelectedDate();
   renderWeekDateList();
@@ -185,17 +188,49 @@ function renderTodoList() {
     const todoListItem = document.createElement("li");
     todoListItem.className = "todo-item";
 
+    const todoActions = document.createElement("div");
+    todoActions.className = "todo-actions";
+
+    if (todoItem.id === editingTodoId) {
+      const editInput = document.createElement("input");
+      editInput.type = "text";
+      editInput.className = "todo-edit-input";
+      editInput.value = todoItem.text;
+
+      const saveButton = createTodoButton("저장", "save-button", () => {
+        saveEditedTodoItem(todoItem.id, editInput.value);
+      });
+
+      const cancelButton = createTodoButton("취소", "cancel-button", () => {
+        cancelEditingTodoItem();
+      });
+
+      editInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          saveEditedTodoItem(todoItem.id, editInput.value);
+        }
+
+        if (event.key === "Escape") {
+          cancelEditingTodoItem();
+        }
+      });
+
+      todoActions.append(saveButton, cancelButton);
+      todoListItem.append(editInput, todoActions);
+      todoList.appendChild(todoListItem);
+
+      editInput.focus();
+      return;
+    }
+
     const todoText = document.createElement("span");
     todoText.className = todoItem.isCompleted
       ? "todo-text completed"
       : "todo-text";
     todoText.textContent = todoItem.text;
 
-    const todoActions = document.createElement("div");
-    todoActions.className = "todo-actions";
-
     const editButton = createTodoButton("수정", "edit-button", () => {
-      editTodoItem(todoItem.id);
+      startEditingTodoItem(todoItem.id);
     });
 
     const completeButton = createTodoButton("완료", "complete-button", () => {
@@ -252,26 +287,43 @@ function addTodoItem(todoText) {
   renderTodoList();
 }
 
-// Todo를 수정하는 함수
-function editTodoItem(todoId) {
-  const targetTodoItem = todoItems.find((todoItem) => todoItem.id === todoId);
+// Todo 수정 모드를 시작하는 함수
+function startEditingTodoItem(todoId) {
+  editingTodoId = todoId;
+  clearMessage();
+  renderTodoList();
+}
 
-  if (!targetTodoItem) return;
+// Todo 수정 내용을 저장하는 함수
+function saveEditedTodoItem(todoId, editedText) {
+  const trimmedEditedText = editedText.trim();
 
-  const editedTodoText = prompt("수정할 내용을 입력하세요.", targetTodoItem.text);
-
-  if (editedTodoText === null) return;
-
-  const trimmedTodoText = editedTodoText.trim();
-
-  if (trimmedTodoText === "") {
+  if (trimmedEditedText === "") {
     showMessage("수정할 Todo 내용을 입력해주세요.");
     return;
   }
 
-  targetTodoItem.text = trimmedTodoText;
+  todoItems = todoItems.map((todoItem) => {
+    if (todoItem.id === todoId) {
+      return {
+        ...todoItem,
+        text: trimmedEditedText,
+      };
+    }
+
+    return todoItem;
+  });
+
+  editingTodoId = null;
 
   saveTodoItemsToLocalStorage();
+  clearMessage();
+  renderTodoList();
+}
+
+// Todo 수정 모드를 취소하는 함수
+function cancelEditingTodoItem() {
+  editingTodoId = null;
   clearMessage();
   renderTodoList();
 }
@@ -289,6 +341,10 @@ function toggleTodoCompletion(todoId) {
     return todoItem;
   });
 
+  if (editingTodoId === todoId) {
+    editingTodoId = null;
+  }
+
   saveTodoItemsToLocalStorage();
   renderTodoList();
 }
@@ -296,6 +352,10 @@ function toggleTodoCompletion(todoId) {
 // Todo를 삭제하는 함수
 function deleteTodoItem(todoId) {
   todoItems = todoItems.filter((todoItem) => todoItem.id !== todoId);
+
+  if (editingTodoId === todoId) {
+    editingTodoId = null;
+  }
 
   saveTodoItemsToLocalStorage();
   renderWeekDateList();
@@ -342,6 +402,7 @@ nextWeekButton.addEventListener("click", () => {
 filterButtons.forEach((filterButton) => {
   filterButton.addEventListener("click", () => {
     currentFilter = filterButton.dataset.filter;
+    editingTodoId = null;
 
     updateFilterButtonStyles();
     renderTodoList();
