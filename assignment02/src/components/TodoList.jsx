@@ -12,7 +12,7 @@ function TodoList({
   if (todoItems.length === 0) {
     return (
       <p className="rounded-2xl border border-dashed border-zinc-200 py-8 text-center text-sm text-zinc-400">
-        등록된 Todo가 없습니다.
+        표시할 Todo가 없습니다.
       </p>
     );
   }

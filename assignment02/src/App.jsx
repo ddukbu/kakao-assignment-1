@@ -1,11 +1,28 @@
 import { useState } from "react";
 import TodoForm from "./components/TodoForm";
 import TodoList from "./components/TodoList";
+import FilterTabs from "./components/FilterTabs";
 
 function App() {
   const [todoItems, setTodoItems] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [editingTodoId, setEditingTodoId] = useState(null);
+
+  // 현재 선택된 필터 상태를 useState로 관리
+  const [currentFilter, setCurrentFilter] = useState("all");
+
+  // 현재 필터 상태에 따라 화면에 보여줄 Todo만 반환
+  function getFilteredTodoItems() {
+    if (currentFilter === "active") {
+      return todoItems.filter((todoItem) => !todoItem.isCompleted);
+    }
+
+    if (currentFilter === "completed") {
+      return todoItems.filter((todoItem) => todoItem.isCompleted);
+    }
+
+    return todoItems;
+  }
 
   function addTodoItem(todoText) {
     const trimmedTodoText = todoText.trim();
@@ -87,6 +104,13 @@ function App() {
     setMessageText("");
   }
 
+  function changeTodoFilter(nextFilter) {
+    setCurrentFilter(nextFilter);
+    setEditingTodoId(null);
+  }
+
+  const filteredTodoItems = getFilteredTodoItems();
+
   return (
     <main className="min-h-screen bg-[#f6f3ff] px-5 py-20 text-zinc-900">
       <section className="mx-auto max-w-2xl rounded-3xl bg-white p-8 shadow-[0_16px_40px_rgba(103,43,224,0.12)]">
@@ -101,8 +125,13 @@ function App() {
 
         <p className="my-3 h-6 text-sm text-red-600">{messageText}</p>
 
+        <FilterTabs
+          currentFilter={currentFilter}
+          onChangeTodoFilter={changeTodoFilter}
+        />
+
         <TodoList
-          todoItems={todoItems}
+          todoItems={filteredTodoItems}
           editingTodoId={editingTodoId}
           onDeleteTodoItem={deleteTodoItem}
           onToggleTodoCompletion={toggleTodoCompletion}
