@@ -2,6 +2,7 @@ import { useState } from "react";
 import TodoForm from "./components/TodoForm";
 import TodoList from "./components/TodoList";
 import FilterTabs from "./components/FilterTabs";
+import DailyDateNavigator from "./components/DailyDateNavigator";
 
 function App() {
   const [todoItems, setTodoItems] = useState([]);
@@ -11,17 +12,45 @@ function App() {
   // 현재 선택된 필터 상태를 useState로 관리
   const [currentFilter, setCurrentFilter] = useState("all");
 
-  // 현재 필터 상태에 따라 화면에 보여줄 Todo만 반환
+  // 현재 선택된 날짜를 useState로 관리
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  function formatDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function moveSelectedDate(dayAmount) {
+    const nextDate = new Date(selectedDate);
+
+    nextDate.setDate(nextDate.getDate() + dayAmount);
+    setSelectedDate(nextDate);
+    setEditingTodoId(null);
+  }
+
   function getFilteredTodoItems() {
+    const selectedDateKey = formatDateKey(selectedDate);
+
+    let filteredTodoItems = todoItems.filter((todoItem) => {
+      return todoItem.date === selectedDateKey;
+    });
+
     if (currentFilter === "active") {
-      return todoItems.filter((todoItem) => !todoItem.isCompleted);
+      filteredTodoItems = filteredTodoItems.filter((todoItem) => {
+        return !todoItem.isCompleted;
+      });
     }
 
     if (currentFilter === "completed") {
-      return todoItems.filter((todoItem) => todoItem.isCompleted);
+      filteredTodoItems = filteredTodoItems.filter((todoItem) => {
+        return todoItem.isCompleted;
+      });
     }
 
-    return todoItems;
+    return filteredTodoItems;
   }
 
   function addTodoItem(todoText) {
@@ -36,6 +65,7 @@ function App() {
       id: Date.now(),
       text: trimmedTodoText,
       isCompleted: false,
+      date: formatDateKey(selectedDate),
     };
 
     setTodoItems([...todoItems, newTodoItem]);
@@ -117,9 +147,14 @@ function App() {
         <header className="mb-7">
           <h1 className="mb-2 text-4xl font-bold text-[#672be0]">Todo</h1>
           <p className="text-sm text-zinc-500">
-            오늘 해야 할 일을 간단하게 관리해보세요.
+            날짜별로 오늘 해야 할 일을 관리해보세요.
           </p>
         </header>
+
+        <DailyDateNavigator
+          selectedDate={selectedDate}
+          onMoveSelectedDate={moveSelectedDate}
+        />
 
         <TodoForm onAddTodoItem={addTodoItem} />
 
