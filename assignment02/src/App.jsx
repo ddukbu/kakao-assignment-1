@@ -1,11 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TodoForm from "./components/TodoForm";
 import TodoList from "./components/TodoList";
 import FilterTabs from "./components/FilterTabs";
 import DailyDateNavigator from "./components/DailyDateNavigator";
 
+const TODO_STORAGE_KEY = "todoItems";
+
 function App() {
-  const [todoItems, setTodoItems] = useState([]);
+  const [todoItems, setTodoItems] = useState(() => {
+    const savedTodoItems = localStorage.getItem(TODO_STORAGE_KEY);
+
+    if (savedTodoItems === null) {
+      return [];
+    }
+
+    return JSON.parse(savedTodoItems);
+  });
+
   const [messageText, setMessageText] = useState("");
   const [editingTodoId, setEditingTodoId] = useState(null);
 
@@ -14,6 +25,11 @@ function App() {
 
   // 현재 선택된 날짜를 useState로 관리
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // todoItems가 변경될 때마다 로컬스토리지에 자동 저장
+  useEffect(() => {
+    localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todoItems));
+  }, [todoItems]);
 
   function formatDateKey(date) {
     const year = date.getFullYear();
